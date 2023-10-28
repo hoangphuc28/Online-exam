@@ -1,8 +1,7 @@
-import { HttpException, Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { QueryFailedError, Repository } from 'typeorm';
 import { User } from './user.entity';
 import { UserDto } from './DTO/user.dto';
-import { AuthService } from './auth.service';
 import * as crypto from 'crypto';
 import { OtpService } from 'src/otp/otp.service';
 import { EmailService } from './email.service';
@@ -12,7 +11,6 @@ export class UserService {
     @Inject('USER_REPOSITORY')
     private userRepository: Repository<User>,
     private otpService: OtpService,
-    private authService: AuthService,
     private emailService: EmailService,
   ) {}
   async create(createUserDto: UserDto) {
@@ -48,20 +46,20 @@ export class UserService {
         return { message: 'An error occurred', statusCode: 500 };
       }
     }
+    return { message: 'create success!', statusCode: 200 };
   }
-  async login(username: string, password: string): Promise<User> {
+  async login(username: string, password: string) {
     const user = await this.userRepository.findOneOrFail({
       where: { username: username },
     });
     if (!user.active) {
-      throw new HttpException('Account has not been actived', 400);
+      return { message: 'Account has not been actived', statusCode: 400 };
     }
     const md5Hash = crypto.createHash('md5').update(password).digest('hex');
-    if (md5Hash === user.password) {
-      return user;
-    } else {
-      throw new HttpException('Password does not correct', 400);
+    if (md5Hash !== user.password) {
+      return { message: 'Password is incorrect', statusCode: 400 };
     }
+    return { id: user.id, username: user.username };
   }
   async findAll(): Promise<User[]> {
     return await this.userRepository.find();
