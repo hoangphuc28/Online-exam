@@ -31,6 +31,7 @@ export class SocketService implements OnGatewayDisconnect {
   async handleStartExam(client: any, data: any) {
     console.log(`Client connected: ${data.userId}}`);
     this.connectedClients.set(data.userId, 0);
+
     console.log(
       'Số lượng người dùng đang truy cập: ' + this.connectedClients.size,
     );
@@ -41,11 +42,10 @@ export class SocketService implements OnGatewayDisconnect {
   @SubscribeMessage('checkAnswer')
   async handleSubmitAnswer(client: any, data: any) {
     const answer = await this.answerService.getById(data.answerId);
-    console.log(answer);
     if (answer.isCorrect) {
       this.connectedClients.set(
         data.userId,
-        this.connectedClients.get(data.usreId) + 1,
+        this.connectedClients.get(data.userId) + 1,
       );
     }
     client.emit('checkAnswer', answer.isCorrect);
@@ -54,9 +54,12 @@ export class SocketService implements OnGatewayDisconnect {
   async handleFinishExam(client: any, data: any) {
     const totalQuestion = await this.examService.getExamById(data.examId);
     const score =
-      this.connectedClients.get(data.userId) / totalQuestion.numberOfQuestions;
+      (this.connectedClients.get(data.userId) /
+        totalQuestion.numberOfQuestions) *
+      10;
     const user = await this.useService.findOne(data.userId);
     const exam = await this.examService.getExamById(data.examId);
+    console.log(score);
     this.examUserService.create(user, exam, score);
     client.emit('finishExam', score);
 
