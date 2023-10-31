@@ -9,7 +9,7 @@ import { AnswerService } from 'src/answer/answer.service';
 import { ExamService } from 'src/examination/examination.service';
 import { ExamuserService } from 'src/examuser/examuser.service';
 import { UserService } from 'src/user/user.service';
-@WebSocketGateway(8080)
+@WebSocketGateway(8080, { cors: true })
 export class SocketService implements OnGatewayDisconnect {
   private connectedClients = new Map();
   constructor(
@@ -62,7 +62,5 @@ export class SocketService implements OnGatewayDisconnect {
     console.log(score);
     this.examUserService.create(user, exam, score);
     client.emit('finishExam', score);
-
-    // Xử lý khi bài thi kết thúc hoặc hết thời gian
   }
 }
